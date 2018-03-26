@@ -6,38 +6,8 @@ import datetime
 
 from settings import db
 from bson.objectid import ObjectId
-from base import rtjson
-
-
-class ApiHandler(tornado.web.RequestHandler):
-
-    def data_received(self, chunk):
-        pass
-
-    def get_argument(self, name, default=None, strip=True):
-        if self.request.method != "GET":
-            if 'application/json' in str(self.request.headers.get('Content-Type')) and self.request.body and self.request.body != '{}' \
-                    and self.request.body.startswith('{'):
-                obj = json.loads(self.request.body)
-                return obj.get(name, default)
-            elif 'application/x-www-form-urlencoded' in str(self.request.headers.get('Content-Type')) \
-                    and self.request.body and self.request.body != '{}' \
-                    and self.request.body.startswith('{'):
-                obj = json.loads(self.request.body)
-                return obj.get(name, default)
-        return self._get_argument(name, default, self.request.arguments, strip)
-
-    def options(self):
-        self.__set_response_header()
-
-    # 这里的意思是在返回时附带允许请求的http response 头
-    def __set_response_header(self):
-        self.set_header('content-type', 'application/json')
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Credentials", "true")
-        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        self.set_header('Access-Control-Allow-Methods',
-                        'POST, GET, OPTIONS, HEAD')
+from tools import rtjson, mongoPager
+from base import ApiHandler
 
 
 class Article(ApiHandler):
@@ -58,8 +28,11 @@ class Article(ApiHandler):
                 article = {}
             self.finish(rtjson(article=article))
         else:
-            article_list = list(db.article.find({}).sort('date', -1))
-            self.finish(rtjson(article_list=article_list))
+            pagenum = self.get_argument("pagenum", 1)
+            query_str = {}
+            article_list, pager = mongoPager(db.article.find({query_str}).sort('date', -1),
+                                             pagenum)
+            self.finish(rtjson(article_list=article_list, pager=pager))
 
     @tornado.web.asynchronous
     @tornado.web.authenticated
