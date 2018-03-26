@@ -30,7 +30,7 @@ class Article(ApiHandler):
         else:
             pagenum = self.get_argument("pagenum", 1)
             query_str = {}
-            article_list, pager = mongoPager(db.article.find({query_str}).sort('date', -1),
+            article_list, pager = mongoPager(db.article.find(query_str).sort('date', -1),
                                              pagenum)
             self.finish(rtjson(article_list=article_list, pager=pager))
 

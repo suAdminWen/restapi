@@ -8,6 +8,9 @@ class ApiHandler(tornado.web.RequestHandler):
     def data_received(self, chunk):
         pass
 
+    def get_current_user(self):
+        return self.get_secure_cookie("tid", self.request.headers.get('token', None))
+
     def get_argument(self, name, default=None, strip=True):
         if self.request.method != "GET":
             if 'application/json' in str(self.request.headers.get('Content-Type')) and self.request.body and self.request.body != '{}' \
